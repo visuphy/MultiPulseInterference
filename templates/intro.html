@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Multi-Pulse Interference Analyzer - Introduction</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/visuphy/visuphy.github.io/refs/heads/main/favicon.png">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+
+    <link rel="stylesheet" href="/MultiPulseInterference/static/intro_style.css">
+
+    <link rel="stylesheet" href="/header.css">
+    <link rel="stylesheet" href="/footer.css">
+
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+
+</head>
+<body>
+
+    <div id="header-placeholder"></div>
+
+    <main class="intro-container">
+
+        <h1>Welcome to the Multi-Pulse Interference Analyzer</h1>
+
+        <div class="simulator-preview">
+            <img src="/MultiPulseInterference/static/Screenshot.png" alt="Screenshot of the Multi-Pulse Interference Analyzer">
+            <a href="/MultiPulseInterference/tool" class="play-link" title="Launch Simulator">
+                <div class="play-button">
+                    <i class="fas fa-rocket"></i>
+                </div>
+            </a>
+        </div>
+
+        <section class="info-section">
+            <p>
+                <span class="author-info">
+                    Original Author: <a href="https://github.com/Hussein-Tofaili" target="_blank">Hussein-Tofaili</a>
+                </span>
+                <span class="info-separator">|</span>
+                <span class="source-info">
+                    Source Code: <a href="https://github.com/visuphy/MultiPulseInterference" target="_blank">
+                        <i class="fab fa-github"></i> GitHub Repository
+                    </a>
+                </span>
+            </p>
+        </section>
+
+        <div class="description" style="margin-top: 20px;">
+             <h2 style="text-align:left; border-bottom: 1px solid #eee; padding-bottom: 5px;">About the Simulator</h2>
+            <p>
+                This tool allows you to simulate and analyze the temporal and spectral interference patterns of multiple laser pulses with different dispersion characteristics.
+            </p>
+        </div>
+
+
+        <h2>Features</h2>
+        <div class="description">
+            <ul>
+                <li>Simulate up to 6 laser pulses simultaneously</li>
+                <li>Choose between Gaussian, Sech², or custom imported spectral shapes</li>
+                <li>Adjust pulse parameters including wavelength, bandwidth, amplitude, and spectral phase coefficients</li>
+                <li>Visualize individual pulse intensities, total interference pattern, spectral intensity, and autocorrelation trace</li>
+                <li>Customize axis ranges for detailed analysis</li>
+            </ul>
+            
+            <h2>How to Use</h2>
+            <ol>
+                <li>Click the "Start Simulation" button below to go to the calculator tool</li>
+                <li>Add one or more pulses using the "Add Pulse" button</li>
+                <li>Configure each pulse's parameters (wavelength, bandwidth, amplitude, phase coefficients, etc.)</li>
+                <li>For custom spectral shapes, select "Import from file" and upload a CSV file with wavelength and intensity data</li>
+                <li>Adjust simulation settings if needed (grid size, axis ranges)</li>
+                <li>Click "Run Simulation" to generate the plots</li>
+            </ol>
+        </div>
+
+        <h2>About the Simulation</h2>
+        <div class="description">
+            <p>The simulation uses Fast Fourier Transform (FFT) to convert between time and frequency domains. The spectral phase is modeled using a Taylor expansion around the central frequency, allowing you to simulate various dispersion effects.</p>
+            
+            <p>The grid size parameter controls the resolution of the simulation. Larger values provide higher resolution but require more computational resources.</p>
+            
+            <p>Please note this python webapp runs on a paid server with limited resources, thus the grid size cannot exceed 2^22 points. For unlimited grid size, please download the source code and run it locally on your machine.</p>
+            <p>Launch the calculator using the button above.</p>
+        </div>
+
+        <div class="comments-section">
+             <h2>Comments & Discussion</h2>
+             <p>Discussions for the <strong>Multi-Pulse Interference Analyzer</strong> can be found on its GitHub repository, or you can leave comments here.</p>
+            <script src="https://giscus.app/client.js"
+        data-repo="visuphy/MultiPulseInterference"
+        data-repo-id="R_kgDOPY8wLg"
+        data-category="Comments"
+        data-category-id="DIC_kwDOPY8wLs4Ct0bi"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="light_high_contrast"
+        data-lang="en"
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async>
+</script>
+            <noscript>Please enable JavaScript to view the comments.</noscript>
+        </div>
+
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Script to include Header/Footer -->
+    <script src="/layout.js" defer></script>
+</body>
+</html>

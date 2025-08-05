@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/visuphy/visuphy.github.io/refs/heads/main/favicon.png">
+    <title>Multi-Pulse Interference Analyzer</title>
+    
+    <!-- Font Awesome CDN for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    
+    <!-- Link to local and shared styles -->
+    <link rel="stylesheet" href="/MultiPulseInterference/static/style.css">
+    <link rel="stylesheet" href="/header.css">
+    <link rel="stylesheet" href="/footer.css">
+    
+    <style>
+        /* Add styles for coordinate tooltip */
+        .coord-tooltip {
+            position: absolute;
+            display: none;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            pointer-events: none;
+            z-index: 1001;
+            white-space: pre;
+            font-family: monospace;
+        }
+        
+        /* Prevent image dragging */
+        .plot-container img {
+            -webkit-user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        /* Style for phase coefficient descriptions */
+        .phase-description {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-left: 5px;
+            font-style: italic;
+        }
+    </style>
+    <script>
+        // Get the current path to use as base URL for API calls
+        const currentPath = window.location.pathname;
+        const baseUrl = currentPath.endsWith('/tool') ? currentPath.substring(0, currentPath.lastIndexOf('/')) : '';
+    </script>
+</head>
+<body>
+    <!-- This div will be populated by layout.js with the shared header content -->
+    <div id="header-placeholder"></div>
+
+    <!-- Styled H1 section from sample -->
+    <h1>
+      <!-- Wrapper for title and copyright -->
+      <div class="h1-title-group">
+        <span class="h1-title">Multi-Pulse Interference Analyzer</span>
+        <div class="h1-copyright">
+          © 2025 <a href="https://github.com/visuphy" target="_blank" title="Visit VisuPhy on GitHub">VisuPhy</a>
+        </div>
+      </div>
+      <!-- Container for the info links -->
+      <div class="h1-info">
+        <div class="info-item">
+          <span class="info-label">About and discussion</span>
+          <div class="info-content">
+            <a href="." target="_blank" title="About and Discussion">
+               <i class="fa-solid fa-file-invoice"></i>
+            </a>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Source</span>
+          <div class="info-content">
+            <a href="https://github.com/visuphy/MultiPulseInterference" target="_blank" title="View Source on GitHub">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Original Author</span>
+          <div class="info-content">
+            <a href="https://github.com/Hussein-Tofaili" target="_blank">Hussein-Tofaili</a>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Other Contributors</span>
+          <div class="info-content">
+            <span style="color: #555;">none</span>
+          </div>
+        </div>
+      </div>
+    </h1>
+
+    <!-- Original content structure remains unchanged -->
+    <div class="container">
+        <!-- Original h2 is now removed as we have the styled h1 above -->
+        
+        <div class="main-content">
+            <!-- Pulse Characteristics Panel -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>Pulse Characteristics</h2>
+                    <span id="pulse-count" class="pulse-count">1 / 6 pulses</span>
+                </div>
+                <div class="pulses-scroll-container">
+                    <div id="pulses-container">
+                        <!-- Initial pulse panel will be added by JavaScript -->
+                    </div>
+                </div>
+                <button id="add-pulse-btn" class="btn btn-primary">Add Pulse</button>
+            </div>
+            
+            <!-- Simulation Settings Panel -->
+            <div class="section">
+                <h2>Simulation Settings</h2>
+                <div class="settings-box">
+                    <label for="grid-exponent">
+                        Grid Size N (2<sup>Exponent</sup>):
+                        <input type="number" id="grid-exponent" min="8" value="16">
+                        <span class="info">Current grid size: <span id="grid-size">65,536</span></span>
+                    </label>
+                </div>
+                
+                <div class="axis-settings">
+                    <h3>Axis Range Settings</h3>
+                    
+                    <div class="axis-control">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="temporal-auto" checked>
+                            Automatic x-axis range for temporal intensity plots
+                        </label>
+                        <div class="manual-range" id="temporal-range" style="display: none;">
+                            <label>Min: <input type="number" id="temporal-min" value="-1000" step="10"></label>
+                            <label>Max: <input type="number" id="temporal-max" value="1000" step="10"></label>
+                            <span class="unit">fs</span>
+                        </div>
+                    </div>
+                    
+                    <div class="axis-control">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="spectral-auto" checked>
+                            Automatic x-axis range for spectral intensity plot
+                        </label>
+                        <div class="manual-range" id="spectral-range" style="display: none;">
+                            <label>Min: <input type="number" id="spectral-min" value="700" step="1"></label>
+                            <label>Max: <input type="number" id="spectral-max" value="900" step="1"></label>
+                            <span class="unit">nm</span>
+                        </div>
+                    </div>
+                    
+                    <div class="axis-control">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="autocorr-auto" checked>
+                            Automatic x-axis range for intensity autocorrelation plot
+                        </label>
+                        <div class="manual-range" id="autocorr-range" style="display: none;">
+                            <label>Min: <input type="number" id="autocorr-min" value="-1000" step="10"></label>
+                            <label>Max: <input type="number" id="autocorr-max" value="1000" step="10"></label>
+                            <span class="unit">fs</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="calculate-btn" class="btn btn-success">Run Simulation</button>
+            </div>
+        </div>
+        
+        <!-- Plots Section -->
+        <div class="section">
+            <h2>Results</h2>
+            <div id="plots-container">
+                <p class="placeholder">Run simulation to see results</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- This div will be populated by layout.js with the shared footer content -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Coordinate tooltip -->
+    <div id="coord-tooltip" class="coord-tooltip"></div>
+    
+    <!-- This script dynamically loads the header and footer -->
+    <script src="/layout.js" defer></script>
+    
+    <script>
+        let pulseCount = 0;
+        const MAX_PULSES = 6;
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB in bytes
+        
+        function updatePulseCount() {
+            const count = document.querySelectorAll('.pulse-panel').length;
+            document.getElementById('pulse-count').textContent = `${count} / ${MAX_PULSES} pulses`;
+            
+            // Enable/disable add button based on count
+            const addButton = document.getElementById('add-pulse-btn');
+            if (count >= MAX_PULSES) {
+                addButton.disabled = true;
+                addButton.textContent = 'Maximum Pulses Reached';
+            } else {
+                addButton.disabled = false;
+                addButton.textContent = 'Add Pulse';
+            }
+        }
+        
+        function getLastPulseValues() {
+            const pulsePanels = document.querySelectorAll('.pulse-panel');
+            if (pulsePanels.length === 0) {
+                // Return default values if no pulses exist
+                return {
+                    lambda0: 800,
+                    fwhm: 10,
+                    amplitude: 1,
+                    phi0: 0,
+                    phi1: 0,
+                    phi2: 0,
+                    phi3: 0,
+                    phi4: 0,
+                    shape: 'gaussian',
+                    importSettings: {
+                        delimiter: ',',
+                        skipRows: 0,
+                        xMultiplier: 1.0,
+                        xExponent: 1.0,
+                        croppingWindow: 4.0
+                    }
+                };
+            }
+            
+            // Get the last pulse panel
+            const lastPanel = pulsePanels[pulsePanels.length - 1];
+            // Get the actual pulse number from data attribute
+            const actualPulseNumber = lastPanel.dataset.pulseNumber;
+            
+            // Extract values from the last pulse
+            const values = {
+                lambda0: parseFloat(lastPanel.querySelector('[name="lambda0"]').value || 800),
+                fwhm: parseFloat(lastPanel.querySelector('[name="fwhm"]').value || 10),
+                amplitude: parseFloat(lastPanel.querySelector('[name="amplitude"]').value || 1),
+                phi0: parseFloat(lastPanel.querySelector('[name="phi0"]').value || 0),
+                phi1: parseFloat(lastPanel.querySelector('[name="phi1"]').value || 0),
+                phi2: parseFloat(lastPanel.querySelector('[name="phi2"]').value || 0),
+                phi3: parseFloat(lastPanel.querySelector('[name="phi3"]').value || 0),
+                phi4: parseFloat(lastPanel.querySelector('[name="phi4"]').value || 0),
+                shape: 'gaussian', // Default
+                importSettings: {
+                    delimiter: ',',
+                    skipRows: 0,
+                    xMultiplier: 1.0,
+                    xExponent: 1.0,
+                    croppingWindow: 4.0
+                }
+            };
+            
+            // Safely get the shape value
+            const shapeRadio = lastPanel.querySelector(`[name="shape_${actualPulseNumber}"]:checked`);
+            if (shapeRadio) {
+                values.shape = shapeRadio.value;
+            }
+            
+            // If last pulse had import settings, copy those too
+            const importSection = lastPanel.querySelector('.import-section');
+            if (importSection) {
+                values.importSettings = {
+                    delimiter: importSection.querySelector('[name="delimiter"]').value || ',',
+                    skipRows: parseInt(importSection.querySelector('[name="skipRows"]').value || 0),
+                    xMultiplier: parseFloat(importSection.querySelector('[name="xMultiplier"]').value || 1.0),
+                    xExponent: parseFloat(importSection.querySelector('[name="xExponent"]').value || 1.0),
+                    croppingWindow: parseFloat(importSection.querySelector('[name="croppingWindow"]').value || 4.0)
+                };
+            }
+            
+            return values;
+        }
+        
+        function createPulsePanel(pulseNumber, values) {
+            const panel = document.createElement('div');
+            panel.className = 'pulse-panel';
+            panel.dataset.pulseNumber = pulseNumber;
+            
+            // Use provided values or defaults
+            const v = values || getLastPulseValues();
+            
+            panel.innerHTML = `
+                <h3>Pulse ${pulseNumber}</h3>
+                <button class="remove-pulse-btn" onclick="removePulse(this)">×</button>
+                <div class="wavelength-section">
+                    <div class="form-group">
+                        <label>Central Wavelength (nm):</label>
+                        <input type="number" name="lambda0" value="${v.lambda0}" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Bandwidth FWHM (nm):</label>
+                        <input type="number" name="fwhm" value="${v.fwhm}" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Amplitude (a.u.):</label>
+                    <input type="number" name="amplitude" value="${v.amplitude}" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>φ₀ (rad):</label>
+                    <input type="number" name="phi0" value="${v.phi0}" step="0.1">
+                    <span class="phase-description">CEP (Carrier-Envelope Phase)</span>
+                </div>
+                <div class="form-group">
+                    <label>φ₁ (fs):</label>
+                    <input type="number" name="phi1" value="${v.phi1}" step="1">
+                    <span class="phase-description">GD (Group Delay / Time Delay)</span>
+                </div>
+                <div class="form-group">
+                    <label>φ₂ (fs²):</label>
+                    <input type="number" name="phi2" value="${v.phi2}" step="1">
+                    <span class="phase-description">GDD (Group Delay Dispersion)</span>
+                </div>
+                <div class="form-group">
+                    <label>φ₃ (fs³):</label>
+                    <input type="number" name="phi3" value="${v.phi3}" step="1">
+                    <span class="phase-description">TOD (Third-Order Dispersion)</span>
+                </div>
+                <div class="form-group">
+                    <label>φ₄ (fs⁴):</label>
+                    <input type="number" name="phi4" value="${v.phi4}" step="1">
+                    <span class="phase-description">FOD (Fourth-Order Dispersion)</span>
+                </div>
+                <div class="form-group">
+                    <label>Spectrum Shape:</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="shape_${pulseNumber}" value="gaussian" ${v.shape === 'gaussian' ? 'checked' : ''} onchange="toggleImportSection(${pulseNumber})"> Gaussian</label>
+                        <label><input type="radio" name="shape_${pulseNumber}" value="sech2" ${v.shape === 'sech2' ? 'checked' : ''} onchange="toggleImportSection(${pulseNumber})"> Sech²</label>
+                        <label><input type="radio" name="shape_${pulseNumber}" value="imported" ${v.shape === 'imported' ? 'checked' : ''} onchange="toggleImportSection(${pulseNumber})"> Import from file</label>
+                    </div>
+                </div>
+                <div class="import-section" style="display: ${v.shape === 'imported' ? 'block' : 'none'};">
+                    <div class="form-group">
+                        <label>Choose CSV file (max 5 MB):</label>
+                        <input type="file" name="csvFile" accept=".csv,.txt" onchange="handleFileSelect(${pulseNumber}, this)">
+                        <span class="file-status" id="file-status-${pulseNumber}"></span>
+                    </div>
+                    <div class="import-settings">
+                        <div class="form-group">
+                            <label>Delimiter:</label>
+                            <input type="text" name="delimiter" value="${v.importSettings.delimiter}" style="width: 50px;">
+                        </div>
+                        <div class="form-group">
+                            <label>Skip rows (header):</label>
+                            <input type="number" name="skipRows" value="${v.importSettings.skipRows}" min="0" step="1" style="width: 80px;">
+                        </div>
+                        <div class="form-group">
+                            <label>X (Wavelength) Multiplier:</label>
+                            <input type="number" name="xMultiplier" value="${v.importSettings.xMultiplier}" step="0.1" style="width: 100px;">
+                            <span class="info-text">X_input × multiplier</span>
+                        </div>
+                        <div class="form-group">
+                            <label>X (Wavelength) Exponent:</label>
+                            <input type="number" name="xExponent" value="${v.importSettings.xExponent}" step="0.1" style="width: 100px;">
+                            <span class="info-text">X_input^exponent</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Cropping Window Size (N × FWHM):</label>
+                            <input type="number" name="croppingWindow" value="${v.importSettings.croppingWindow}" step="0.1" min="1" style="width: 100px;">
+                            <span class="info-text">Total width centered at peak</span>
+                        </div>
+                    </div>
+                    <div class="import-note">
+                        Note: Central wavelength and bandwidth are derived from imported data.
+                    </div>
+                </div>
+            `;
+            
+            // If imported, disable wavelength section immediately
+            if (v.shape === 'imported') {
+                setTimeout(() => toggleImportSection(pulseNumber), 0);
+            }
+            
+            return panel;
+        }
+        
+        function toggleImportSection(pulseNumber) {
+            const panel = document.querySelector(`.pulse-panel[data-pulse-number="${pulseNumber}"]`);
+            if (!panel) return;
+            
+            const importSection = panel.querySelector('.import-section');
+            const wavelengthSection = panel.querySelector('.wavelength-section');
+            const selectedShape = panel.querySelector(`[name="shape_${pulseNumber}"]:checked`).value;
+            
+            if (selectedShape === 'imported') {
+                importSection.style.display = 'block';
+                wavelengthSection.style.opacity = '0.5';
+                wavelengthSection.querySelectorAll('input').forEach(input => {
+                    input.disabled = true;
+                });
+            } else {
+                importSection.style.display = 'none';
+                wavelengthSection.style.opacity = '1';
+                wavelengthSection.querySelectorAll('input').forEach(input => {
+                    input.disabled = false;
+                });
+            }
+        }
+        
+        let fileContents = {};
+        
+        function handleFileSelect(pulseNumber, input) {
+            const file = input.files[0];
+            if (!file) {
+                delete fileContents[pulseNumber];
+                const statusElement = document.getElementById(`file-status-${pulseNumber}`);
+                if (statusElement) statusElement.textContent = '';
+                return;
+            }
+            
+            // Check file size
+            if (file.size > MAX_FILE_SIZE) {
+                const statusElement = document.getElementById(`file-status-${pulseNumber}`);
+                if (statusElement) {
+                    statusElement.textContent = '✗ File exceeds 5 MB limit';
+                    statusElement.style.color = '#dc3545';
+                }
+                input.value = ''; // Clear the file input
+                delete fileContents[pulseNumber];
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fileContents[pulseNumber] = e.target.result;
+                const statusElement = document.getElementById(`file-status-${pulseNumber}`);
+                if (statusElement) {
+                    statusElement.textContent = `✓ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                    statusElement.style.color = '#28a745';
+                }
+            };
+            reader.onerror = function() {
+                delete fileContents[pulseNumber];
+                const statusElement = document.getElementById(`file-status-${pulseNumber}`);
+                if (statusElement) {
+                    statusElement.textContent = '✗ Error reading file';
+                    statusElement.style.color = '#dc3545';
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function addPulse() {
+            const currentPulseCount = document.querySelectorAll('.pulse-panel').length;
+            if (currentPulseCount >= MAX_PULSES) {
+                alert(`Maximum of ${MAX_PULSES} pulses allowed`);
+                return;
+            }
+            
+            pulseCount++;
+            const container = document.getElementById('pulses-container');
+            
+            // Get values from the last pulse
+            const lastPulseValues = getLastPulseValues();
+            
+            // Create new panel with copied values
+            container.appendChild(createPulsePanel(pulseCount, lastPulseValues));
+            
+            // Update pulse count display
+            updatePulseCount();
+            
+            // Scroll to the new pulse
+            const scrollContainer = document.querySelector('.pulses-scroll-container');
+            setTimeout(() => {
+                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+            }, 100);
+        }
+        
+        function removePulse(button) {
+            const panel = button.parentElement;
+            const pulseNumber = panel.dataset.pulseNumber;
+            delete fileContents[pulseNumber];
+            panel.remove();
+            updatePulseCount();
+        }
+        
+        function updateGridSize() {
+            const exponent = document.getElementById('grid-exponent').value;
+            const size = Math.pow(2, exponent);
+            document.getElementById('grid-size').textContent = size.toLocaleString();
+        }
+        
+        function toggleAxisRange(checkboxId, rangeId) {
+            const checkbox = document.getElementById(checkboxId);
+            const rangeDiv = document.getElementById(rangeId);
+            rangeDiv.style.display = checkbox.checked ? 'none' : 'flex';
+        }
+        
+        function collectPulseData() {
+            const pulses = [];
+            const pulsePanels = document.querySelectorAll('.pulse-panel');
+            
+            pulsePanels.forEach((panel, index) => {
+                const pulseNumber = panel.dataset.pulseNumber;
+                const shapeRadio = panel.querySelector(`[name="shape_${pulseNumber}"]:checked`);
+                const shape = shapeRadio ? shapeRadio.value : 'gaussian';
+                
+                const pulse = {
+                    lambda0: parseFloat(panel.querySelector('[name="lambda0"]').value || 800),
+                    fwhm: parseFloat(panel.querySelector('[name="fwhm"]').value || 10),
+                    amplitude: parseFloat(panel.querySelector('[name="amplitude"]').value || 1),
+                    phi0: parseFloat(panel.querySelector('[name="phi0"]').value || 0),
+                    phi1: parseFloat(panel.querySelector('[name="phi1"]').value || 0),
+                    phi2: parseFloat(panel.querySelector('[name="phi2"]').value || 0),
+                    phi3: parseFloat(panel.querySelector('[name="phi3"]').value || 0),
+                    phi4: parseFloat(panel.querySelector('[name="phi4"]').value || 0),
+                    shape: shape
+                };
+                
+                // Add import data if shape is imported
+                if (shape === 'imported' && fileContents[pulseNumber]) {
+                    const importSection = panel.querySelector('.import-section');
+                    pulse.importedData = {
+                        content: fileContents[pulseNumber],
+                        delimiter: importSection.querySelector('[name="delimiter"]').value || ',',
+                        skipRows: parseInt(importSection.querySelector('[name="skipRows"]').value || 0),
+                        xMultiplier: parseFloat(importSection.querySelector('[name="xMultiplier"]').value || 1.0),
+                        xExponent: parseFloat(importSection.querySelector('[name="xExponent"]').value || 1.0),
+                        croppingWindow: parseFloat(importSection.querySelector('[name="croppingWindow"]').value || 4.0)
+                    };
+                }
+                
+                pulses.push(pulse);
+            });
+            
+            return pulses;
+        }
+        
+        function collectAxisSettings() {
+            return {
+                temporal: {
+                    auto: document.getElementById('temporal-auto').checked,
+                    min: parseFloat(document.getElementById('temporal-min').value),
+                    max: parseFloat(document.getElementById('temporal-max').value)
+                },
+                spectral: {
+                    auto: document.getElementById('spectral-auto').checked,
+                    min: parseFloat(document.getElementById('spectral-min').value),
+                    max: parseFloat(document.getElementById('spectral-max').value)
+                },
+                autocorr: {
+                    auto: document.getElementById('autocorr-auto').checked,
+                    min: parseFloat(document.getElementById('autocorr-min').value),
+                    max: parseFloat(document.getElementById('autocorr-max').value)
+                }
+            };
+        }
+        
+        // Function to set up coordinate display for a plot image
+        function setupCoordinateDisplay(imgElement, metadata) {
+            const tooltip = document.getElementById('coord-tooltip');
+            
+            if (!imgElement || !metadata || !metadata.subplots || metadata.subplots.length === 0) {
+                imgElement.onmousemove = null;
+                imgElement.onmouseenter = null;
+                imgElement.onmouseleave = null;
+                return;
+            }
+            
+            imgElement.onmouseenter = () => {
+                tooltip.style.display = 'block';
+            };
+            
+            imgElement.onmouseleave = () => {
+                tooltip.style.display = 'none';
+            };
+            
+            imgElement.onmousemove = (event) => {
+                const rect = imgElement.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                
+                const originalWidth = metadata.image_size_px[0];
+                const originalHeight = metadata.image_size_px[1];
+                
+                if (originalWidth < 1 || originalHeight < 1) return;
+                
+                const scaleX = rect.width / originalWidth;
+                const scaleY = rect.height / originalHeight;
+                
+                // Find which subplot the mouse is over
+                let activeSubplot = null;
+                
+                for (const subplot of metadata.subplots) {
+                    const [px, py, pwidth, pheight] = subplot.pixel_bbox;
+                    const scaledBbox = {
+                        x: px * scaleX,
+                        y: py * scaleY,
+                        width: pwidth * scaleX,
+                        height: pheight * scaleY
+                    };
+                    
+                    if (mouseX >= scaledBbox.x && 
+                        mouseX <= scaledBbox.x + scaledBbox.width && 
+                        mouseY >= scaledBbox.y && 
+                        mouseY <= scaledBbox.y + scaledBbox.height) {
+                        activeSubplot = {
+                            data: subplot,
+                            scaled_bbox: scaledBbox
+                        };
+                        break;
+                    }
+                }
+                
+                if (activeSubplot) {
+                    const { data, scaled_bbox } = activeSubplot;
+                    const [xLimMin, xLimMax] = data.xlim;
+                    const [yLimMin, yLimMax] = data.ylim;
+                    
+                    // Calculate fractional position within the subplot
+                    const xFraction = (mouseX - scaled_bbox.x) / scaled_bbox.width;
+                    const yFraction = (scaled_bbox.y + scaled_bbox.height - mouseY) / scaled_bbox.height;
+                    
+                    // Convert to data coordinates
+                    const dataX = xLimMin + xFraction * (xLimMax - xLimMin);
+                    const dataY = yLimMin + yFraction * (yLimMax - yLimMin);
+                    
+                    // Determine axis labels based on subplot index
+                    const subplotIndex = metadata.subplots.indexOf(data);
+                    let xLabel = 'X';
+                    let yLabel = 'Y';
+                    
+                    if (subplotIndex === 0) {
+                        xLabel = 'Time (fs)';
+                        yLabel = 'Intensity (a.u.)';
+                    } else if (subplotIndex === 1) {
+                        xLabel = 'Time (fs)';
+                        yLabel = 'Normalized Intensity';
+                    } else if (subplotIndex === 2) {
+                        xLabel = 'Wavelength (nm)';
+                        yLabel = 'Normalized Intensity';
+                    } else if (subplotIndex === 3) {
+                        xLabel = 'Time Delay (fs)';
+                        yLabel = 'Normalized Intensity';
+                    }
+                    
+                    tooltip.innerHTML = `${xLabel}: ${dataX.toFixed(2)}\n${yLabel}: ${dataY.toFixed(2)}`;
+                    tooltip.style.left = `${event.pageX + 15}px`;
+                    tooltip.style.top = `${event.pageY}px`;
+                    tooltip.style.display = 'block';
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            };
+        }
+        
+        async function runSimulation() {
+            const button = document.getElementById('calculate-btn');
+            const plotsContainer = document.getElementById('plots-container');
+            
+            // Don't run if already running
+            if (button.disabled) {
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Calculating...';
+            plotsContainer.innerHTML = '<p class="loading">Processing...</p>';
+            
+            const data = {
+                pulses: collectPulseData(),
+                gridExponent: parseInt(document.getElementById('grid-exponent').value),
+                axisSettings: collectAxisSettings()
+            };
+            
+            try {
+                // Use the baseUrl to make the request relative to the current path
+                const response = await fetch(`${baseUrl}/calculate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                // Check if response is ok before parsing JSON
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} ${response.statusText} - ${errorText}`);
+                }
+                
+                // Check content type before parsing
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error(`Unexpected content type: ${contentType}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Create plot container with image
+                    plotsContainer.innerHTML = `<img id="plot-image" src="data:image/png;base64,${result.plot_data}" alt="Simulation Results">`;
+                    
+                    // Set up coordinate display if metadata is available
+                    if (result.plot_metadata) {
+                        const imgElement = document.getElementById('plot-image');
+                        imgElement.onload = () => {
+                            setupCoordinateDisplay(imgElement, result.plot_metadata);
+                        };
+                    }
+                } else {
+                    plotsContainer.innerHTML = `<p class="error">Error: ${result.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error in runSimulation:', error);
+                plotsContainer.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Run Simulation';
+            }
+        }
+        
+        function handleEnterKey(event) {
+            // Check if Enter key was pressed (keyCode 13)
+            if (event.keyCode === 13 || event.key === 'Enter') {
+                // Prevent default form submission behavior if inside a form
+                event.preventDefault();
+                
+                // Check if the target is an input field (don't trigger on textareas)
+                if (event.target.tagName === 'INPUT' && event.target.type !== 'file') {
+                    runSimulation();
+                }
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('add-pulse-btn').addEventListener('click', addPulse);
+        document.getElementById('grid-exponent').addEventListener('input', updateGridSize);
+        document.getElementById('calculate-btn').addEventListener('click', runSimulation);
+        
+        // Axis range toggle listeners
+        document.getElementById('temporal-auto').addEventListener('change', () => 
+            toggleAxisRange('temporal-auto', 'temporal-range'));
+        document.getElementById('spectral-auto').addEventListener('change', () => 
+            toggleAxisRange('spectral-auto', 'spectral-range'));
+        document.getElementById('autocorr-auto').addEventListener('change', () => 
+            toggleAxisRange('autocorr-auto', 'autocorr-range'));
+        
+        // Add Enter key listener to the entire document
+        document.addEventListener('keydown', handleEnterKey);
+        
+        // Initialize with one pulse
+        addPulse();
+    </script>
+</body>
+</html>
