@@ -1,5 +1,11 @@
-numpy>=1.20.0
-matplotlib>=3.3.0
+# Core web framework
 Flask>=2.0.0
-scipy>=1.7.0
 Werkzeug>=2.0.0
+
+# Scientific computing
+numpy>=1.20.0
+scipy>=1.7.0
+matplotlib>=3.3.0
+
+# System monitoring
+psutil>=5.8.0
